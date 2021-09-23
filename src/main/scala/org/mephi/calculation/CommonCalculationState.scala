@@ -3,6 +3,7 @@ package org.mephi.calculation
 import org.mephi.events.CalculationResultEvent
 
 class CommonCalculationState(formula: Map[String, Double], const: Double = 0.0) extends CalculationState {
+
   override def applyDelta(delta: Double): Unit = {
 
   }
