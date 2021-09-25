@@ -1,36 +1,51 @@
 package org.mephi.adaptron
 
-import org.mephi.cg.CognitiveMap
+import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
-import org.mephi.metric.CognitiveMapQuality
+import org.mephi.metric.MeanSquaredError
+import scala.util.Random
+import scala.math.sqrt
+import scala.util.control.Breaks._
 
-class GridAdaptron(cgTrainer: CognitiveMapTrainer, cognitiveMapQuality: CognitiveMapQuality) extends Adaptron {
-  private val RollbackThr = 10
+class GridAdaptron(cmTrainer: CognitiveMapTrainer, cognitiveMapQuality: MeanSquaredError) extends Adaptron {
 
-  override def adapt(cg: CognitiveMap): CognitiveMap = {
-    // условие выхода из этой шняги
-    var bestCg = cg.copy()
-    var currCg = bestCg.copy()
-    var maxQ = cognitiveMapQuality.calc(bestCg)
-    var nRollback = 0
-    while (nRollback > RollbackThr) {
-      removeRandomLink(currCg)
-      cgTrainer.train(currCg)
-      val q = cognitiveMapQuality.calc(currCg)
-      if (q >= maxQ) {
-        maxQ = q
-        bestCg = currCg.copy()
-        nRollback = 0 // her znaet
-      } else {
-        currCg = bestCg
-        nRollback += 1
+  override def adapt(cm: CognitiveMap): CognitiveMap = {
+    var linksLength = cognitiveMap.getLinks.length
+    val threshold = sqrt(currLinksLength).toInt // max links number can be deleted
+    breakable {
+      for (i <- threshold) {
+        bestCm = removeWorstLink(cm)
+        if (bestCm.getLinks.length == linksLength) {
+          break // stop if non link was deleted
+        } else {
+          linksLength = bestCm.getLinks.length
+        }
       }
     }
-    bestCg
+    bestCm
   }
 
-  // Удалить рандомное ребро из CM
+  private def removeWorstLink(cognitiveMap: CognitiveMap): CognitiveMap = {
+    val links = cognitiveMap.getLinks
+    var worstIndex = null // do not delete any link if non of them improves quality
+    var bestQuality = cognitiveMapQuality.calc(cognitiveMap)
+    links.zipWithIndex.foreach{ case (link, index) => 
+      val currCognitiveMap = cognitiveMap.removeLink(index)
+      val currQuality = 1/cognitiveMapQuality.calc(cmTrainer.train(currCognitiveMap))
+      if (currQuality >= bestQuality) {
+        bestQuality = currQuality
+        worstIndex = index
+      }
+    }
+    if (worstIndex != null) {
+      cognitiveMap.removeLink(worstIndex)
+    } else {
+      cognitiveMap
+    }
+  }
+
   private def removeRandomLink(cognitiveMap: CognitiveMap): CognitiveMap = {
-    cognitiveMap
+    val random = new Random
+    cognitiveMap.removeLink(cognitiveMap.getLinks(random.nextInt(cognitiveMap.getLinks.length)))
   }
 }

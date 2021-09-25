@@ -36,6 +36,10 @@ class CalculationConcept(private val conceptName: String,
   private def addLink(linkEvent: LinkEvent): Unit = {
     links = links ++ Seq(linkEvent.getLink)
   }
+  
+  private def removeLink(unlinkEvent: UnlinkEvent): Unit = {
+    links --= Seq(unlinkEvent.getLink)
+  }
 
   private def calculate(calculationEvent: CalculationEvent): Unit = {
     checkAndNotify(calculationEvent.getRequest)

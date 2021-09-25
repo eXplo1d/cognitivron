@@ -1,7 +1,7 @@
 package org.mephi.metric
 
-import org.mephi.cg.CognitiveMap
+import scala.collection.immutable.HashMap
 
 trait CognitiveMapQuality {
-  def calc(cognitiveMap: CognitiveMap): Double
+  def calc(actualExpectedMap: HashMap): Double
 }

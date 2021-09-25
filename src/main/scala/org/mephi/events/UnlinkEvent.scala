@@ -2,13 +2,13 @@ package org.mephi.events
 
 import akka.actor.ActorRef
 
-trait LinkEvent {
+trait UnlinkEvent {
   def getLink: ActorRef
 }
 
-object LinkEvent {
-  def apply(actorRef: ActorRef): LinkEvent = {
-    new LinkEvent {
+object UnlinkEvent {
+  def apply(actorRef: ActorRef): UnlinkEvent = {
+    new UnlinkEvent {
       override def getLink: ActorRef = actorRef
     }
   }
