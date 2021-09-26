@@ -1,5 +1,7 @@
 package org.mephi.concept
 
-trait Concept {
+import akka.actor.Actor
+
+trait Concept extends Actor {
 
 }

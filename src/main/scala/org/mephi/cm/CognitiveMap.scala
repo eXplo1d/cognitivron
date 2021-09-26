@@ -1,11 +1,10 @@
 package org.mephi.cm
 
-import scala.collection.immutable.HashMap
+import akka.actor.ActorRef
 
 trait CognitiveMap {
   def copy(): CognitiveMap
-  def addLink(link: ActorRef): CognitiveMap
-  def removeLink(link: ActorRef): CognitiveMap
-  def getLinks(): Seq[ActorRef]()
-
+  def addLink(concept: String, link: ActorRef): Unit
+  def removeLink(concept: String, link: ActorRef): Unit
+  def getConcept2Link: Seq[(String, ActorRef)]
 }

@@ -2,18 +2,18 @@ package org.mephi.adaptron
 
 import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
-import org.mephi.metric.MeanSquaredError
-import org.mephi.metric.R2coefficient
+import org.mephi.metric.CognitiveMapError
 import scala.util.control.Breaks._
 
-class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer, meanSquaredError: MeanSquaredError, r2coefficient: R2coefficient) extends Adaptron {
-
-  override def adapt(cm: CognitiveMap): CognitiveMap = {
+class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer,
+                        cognitiveMapError: CognitiveMapError) extends Adaptron {
+  override def adapt(cognitiveMap: CognitiveMap): CognitiveMap = {
     var linksLength = cognitiveMap.getLinks.length
     val threshold = (linksLength/3).toInt // max links number can be deleted
+    var bestCm = cognitiveMap
     breakable {
-      for (i <- threshold) {
-        bestCm = removeWorstLink(cm)
+      for (_ <- Range(0, threshold)) {
+        bestCm = removeWorstLink(cognitiveMap)
         if (bestCm.getLinks.length == linksLength) {
           break // stop if non link was deleted
         } else {
@@ -26,20 +26,17 @@ class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer, meanSquaredError: MeanSq
 
   private def removeWorstLink(cognitiveMap: CognitiveMap): CognitiveMap = {
     val links = cognitiveMap.getLinks
-    var worstIndex = null // do not delete any link if non of them improves quality
-    var bestMeanSquaredQuality = 1/meanSquaredError.calc(cognitiveMap)
-    var bestR2coefficientQuality = r2coefficient.calc(cognitiveMap)
+    var worstIndex = -1 // do not delete any link if non of them improves quality
+    var bestMeanSquaredError = cognitiveMapError.calc(cognitiveMap)
     links.zipWithIndex.foreach{ case (link, index) => 
       val currCognitiveMap = cognitiveMap.removeLink(index)
-      val currMeanSquaredQuality = 1/meanSquaredError.calc(cmTrainer.train(currCognitiveMap))
-      val currR2coefficientQuality = r2coefficient.calc(cmTrainer.train(currCognitiveMap))
-      if (currMeanSquaredQuality > bestMeanSquaredQuality || currR2coefficientQuality > bestR2coefficientQuality) {
-        bestMeanSquaredQuality = currMeanSquaredQuality
-        bestR2coefficientQuality = currR2coefficientQuality
+      val currMeanSquaredError = cognitiveMapError.calc(cmTrainer.train(currCognitiveMap))
+      if (currMeanSquaredError < bestMeanSquaredError) {
+        bestMeanSquaredError = currMeanSquaredError
         worstIndex = index
       }
     }
-    if (worstIndex != null) {
+    if (worstIndex != -1) {
       cognitiveMap.removeLink(worstIndex)
     } else {
       cognitiveMap

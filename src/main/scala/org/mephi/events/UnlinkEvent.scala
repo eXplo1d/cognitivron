@@ -7,9 +7,9 @@ trait UnlinkEvent {
 }
 
 object UnlinkEvent {
-  def apply(actorRef: ActorRef): UnlinkEvent = {
+  def apply(link: ActorRef): UnlinkEvent = {
     new UnlinkEvent {
-      override def getLink: ActorRef = actorRef
+      override def getLink: ActorRef = link
     }
   }
 }

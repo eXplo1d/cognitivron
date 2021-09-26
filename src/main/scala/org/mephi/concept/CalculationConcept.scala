@@ -1,13 +1,13 @@
 package org.mephi.concept
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{ActorRef, Props}
 import org.mephi.calculation.CalculationState
-import org.mephi.events.{BackpropagationEvent, CalculationEvent, CalculationResultEvent, LinkEvent}
+import org.mephi.events._
 
 import scala.collection.immutable.HashMap
 
 class CalculationConcept(private val conceptName: String,
-                         private val calculationState: CalculationState) extends Actor with Concept {
+                         private val calculationState: CalculationState) extends Concept {
 
   private var links = Seq[ActorRef]()
 
@@ -20,6 +20,7 @@ class CalculationConcept(private val conceptName: String,
     case delta: BackpropagationEvent => applyDelta(delta)
     case calculated: CalculationResultEvent => collectResult(calculated)
     case link: LinkEvent => addLink(link)
+    case unlink: UnlinkEvent => unlinkEvent(unlink)
   }
 
   private def collectResult(calculated: CalculationResultEvent): Unit = {
@@ -35,10 +36,11 @@ class CalculationConcept(private val conceptName: String,
 
   private def addLink(linkEvent: LinkEvent): Unit = {
     links = links ++ Seq(linkEvent.getLink)
+    linkEvent.getLink ! linkEvent
   }
-  
-  private def removeLink(unlinkEvent: UnlinkEvent): Unit = {
-    links --= Seq(unlinkEvent.getLink)
+
+  private def unlinkEvent(unlinkEvent: UnlinkEvent): Unit = {
+    unlinkEvent.getLink ! unlinkEvent
   }
 
   private def calculate(calculationEvent: CalculationEvent): Unit = {
