@@ -2,7 +2,8 @@ package org.mephi.calculation
 
 import org.mephi.events.CalculationResultEvent
 
-class CommonCalculationState(formula: Map[String, Double], const: Double = 0.0) extends CalculationState {
+class CommonCalculationState(formula: Map[String, Double],
+                             const: Double = 0.0) extends CalculationState {
 
   override def applyDelta(delta: Double): Unit = {
 
@@ -12,9 +13,9 @@ class CommonCalculationState(formula: Map[String, Double], const: Double = 0.0) 
     formula.keySet
   }
 
-  override def calculate(attributes: Map[String, CalculationResultEvent]): Double = {
+  override def calculate(attributes: Map[String, CalculationResultEvent], weightCost: Double): Double = {
     attributes.map {
       kv => formula.getOrElse(kv._1, 0.0) * kv._2.getResult
-    }.sum + const
+    }.sum + const + weightCost
   }
 }

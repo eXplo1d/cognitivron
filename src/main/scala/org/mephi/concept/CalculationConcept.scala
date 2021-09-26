@@ -1,7 +1,7 @@
 package org.mephi.concept
 
 import akka.actor.{ActorRef, Props}
-import org.mephi.calculation.CalculationState
+import org.mephi.calculation.{CalculationState, Request}
 import org.mephi.events._
 
 import scala.collection.immutable.HashMap
@@ -11,9 +11,9 @@ class CalculationConcept(private val conceptName: String,
 
   private var links = Seq[ActorRef]()
 
-  private var parametersMap = new HashMap[String, Map[String, CalculationResultEvent]]()
+  private var parametersMap = new HashMap[Int, Map[String, CalculationResultEvent]]()
   private val attributes = calculationState.getAttributes
-  private var calculatedRequest: Set[String] = Set()
+  private var results = new HashMap[Int, Double]()
 
   override def receive: Receive = {
     case calculation: CalculationEvent => calculate(calculation)
@@ -21,15 +21,16 @@ class CalculationConcept(private val conceptName: String,
     case calculated: CalculationResultEvent => collectResult(calculated)
     case link: LinkEvent => addLink(link)
     case unlink: UnlinkEvent => unlinkEvent(unlink)
+    case updateValueEvent: UpdateValueEvent => updateValue(updateValueEvent)
   }
 
   private def collectResult(calculated: CalculationResultEvent): Unit = {
     if (attributes.contains(calculated.getConceptName)) {
-      val calcState = parametersMap.getOrElse(calculated.getRequest, Map())
+      val calcState = parametersMap.getOrElse(calculated.getRequest.iteration, Map())
       val newMap = calcState + (calculated.getConceptName -> calculated)
-      parametersMap = parametersMap + (calculated.getRequest -> newMap)
+      parametersMap = parametersMap + (calculated.getRequest.iteration -> newMap)
     } else {
-      parametersMap = parametersMap + (calculated.getRequest -> Map(calculated.getConceptName -> calculated))
+      parametersMap = parametersMap + (calculated.getRequest.iteration -> Map(calculated.getConceptName -> calculated))
     }
     checkAndNotify(calculated.getRequest)
   }
@@ -51,14 +52,24 @@ class CalculationConcept(private val conceptName: String,
     calculationState.applyDelta(delta.getError)
   }
 
-  private def checkAndNotify(request: String): Unit = {
-    val params = parametersMap.getOrElse(request, Map())
+  private def checkAndNotify(request: Request): Unit = {
+    val params = parametersMap.getOrElse(request.iteration, Map())
     if (params.keySet == attributes) {
-      val calculation = CalculationResultEvent(request, conceptName, calculationState.calculate(params))
+      val previous = results.getOrElse(request.iteration - 1, 0.0)
+      val result = calculationState.calculate(params, previous)
+      val calculation = CalculationResultEvent(request, conceptName, result)
+      results += (request.iteration -> result)
       links.foreach {
         link => link ! calculation
       }
-      calculatedRequest += request
+    }
+  }
+
+  private def updateValue(updateValueEvent: UpdateValueEvent): Unit = {
+    results += (updateValueEvent.getRequest.iteration -> updateValueEvent.getValue)
+    val calculation = CalculationResultEvent(updateValueEvent.getRequest, conceptName, updateValueEvent.getValue)
+    links.foreach {
+      link => link ! calculation
     }
   }
 }
