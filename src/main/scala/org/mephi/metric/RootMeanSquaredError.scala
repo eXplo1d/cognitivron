@@ -1,12 +1,12 @@
 package org.mephi.metric
 
 import scala.collection.immutable.HashMap
-import scala.math.pow
+import scala.math.{abs, sqrt}
 
-class MeanSquaredError(actualExpectedMap: HashMap) extends Quality {
+class RootMeanSquaredError(actualExpectedMap: HashMap) extends Quality {
   override def calc(actualExpectedMap: HashMap): Double = {
-    return actualExpectedMap.map {
+    return sqrt(actualExpectedMap.map {
       case(actual, expected) => pow((expected - actual), 2)
-    }.mean()
+    }.mean())
   }
 }
