@@ -1,7 +1,7 @@
 package org.mephi.adaptron
 
-import org.mephi.cg.CognitiveMap
+import org.mephi.cm.CognitiveMap
 
 trait Adaptron {
-  def adapt(cg: CognitiveMap): CognitiveMap
+  def adapt(cm: CognitiveMap): CognitiveMap
 }

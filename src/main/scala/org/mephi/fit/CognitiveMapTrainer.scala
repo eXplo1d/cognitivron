@@ -1,7 +1,7 @@
 package org.mephi.fit
 
-import org.mephi.cg.CognitiveMap
+import org.mephi.cm.CognitiveMap
 
 trait CognitiveMapTrainer {
-  def train(cg: CognitiveMap): Unit
+  def train(cm: CognitiveMap): Unit
 }

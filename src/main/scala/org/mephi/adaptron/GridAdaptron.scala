@@ -1,32 +1,32 @@
 package org.mephi.adaptron
 
-import org.mephi.cg.CognitiveMap
+import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
 import org.mephi.metric.CognitiveMapQuality
 
-class GridAdaptron(cgTrainer: CognitiveMapTrainer, cognitiveMapQuality: CognitiveMapQuality) extends Adaptron {
+class GridAdaptron(cmTrainer: CognitiveMapTrainer, cognitiveMapQuality: CognitiveMapQuality) extends Adaptron {
   private val RollbackThr = 10
 
-  override def adapt(cg: CognitiveMap): CognitiveMap = {
+  override def adapt(cm: CognitiveMap): CognitiveMap = {
     // условие выхода из этой шняги
-    var bestCg = cg.copy()
-    var currCg = bestCg.copy()
-    var maxQ = cognitiveMapQuality.calc(bestCg)
+    var bestCm = cm.copy()
+    var currCm = bestCm.copy()
+    var maxQ = cognitiveMapQuality.calc(bestCm)
     var nRollback = 0
     while (nRollback > RollbackThr) {
-      removeRandomLink(currCg)
-      cgTrainer.train(currCg)
-      val q = cognitiveMapQuality.calc(currCg)
+      removeRandomLink(currCm)
+      cmTrainer.train(currCm)
+      val q = cognitiveMapQuality.calc(currCm)
       if (q >= maxQ) {
         maxQ = q
-        bestCg = currCg.copy()
+        bestCm = currCm.copy()
         nRollback = 0 // her znaet
       } else {
-        currCg = bestCg
+        currCm = bestCm
         nRollback += 1
       }
     }
-    bestCg
+    bestCm
   }
 
   // Удалить рандомное ребро из CM
