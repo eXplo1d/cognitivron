@@ -3,15 +3,14 @@ package org.mephi.adaptron
 import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
 import org.mephi.metric.MeanSquaredError
-import scala.util.Random
-import scala.math.sqrt
+import org.mephi.metric.R2coefficient
 import scala.util.control.Breaks._
 
-class GridAdaptron(cmTrainer: CognitiveMapTrainer, cognitiveMapQuality: MeanSquaredError) extends Adaptron {
+class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer, meanSquaredError: MeanSquaredError, r2coefficient: R2coefficient) extends Adaptron {
 
   override def adapt(cm: CognitiveMap): CognitiveMap = {
     var linksLength = cognitiveMap.getLinks.length
-    val threshold = sqrt(currLinksLength).toInt // max links number can be deleted
+    val threshold = (linksLength/3).toInt // max links number can be deleted
     breakable {
       for (i <- threshold) {
         bestCm = removeWorstLink(cm)
@@ -28,12 +27,15 @@ class GridAdaptron(cmTrainer: CognitiveMapTrainer, cognitiveMapQuality: MeanSqua
   private def removeWorstLink(cognitiveMap: CognitiveMap): CognitiveMap = {
     val links = cognitiveMap.getLinks
     var worstIndex = null // do not delete any link if non of them improves quality
-    var bestQuality = cognitiveMapQuality.calc(cognitiveMap)
+    var bestMeanSquaredQuality = 1/meanSquaredError.calc(cognitiveMap)
+    var bestR2coefficientQuality = r2coefficient.calc(cognitiveMap)
     links.zipWithIndex.foreach{ case (link, index) => 
       val currCognitiveMap = cognitiveMap.removeLink(index)
-      val currQuality = 1/cognitiveMapQuality.calc(cmTrainer.train(currCognitiveMap))
-      if (currQuality >= bestQuality) {
-        bestQuality = currQuality
+      val currMeanSquaredQuality = 1/meanSquaredError.calc(cmTrainer.train(currCognitiveMap))
+      val currR2coefficientQuality = r2coefficient.calc(cmTrainer.train(currCognitiveMap))
+      if (currMeanSquaredQuality > bestMeanSquaredQuality || currR2coefficientQuality > bestR2coefficientQuality) {
+        bestMeanSquaredQuality = currMeanSquaredQuality
+        bestR2coefficientQuality = currR2coefficientQuality
         worstIndex = index
       }
     }
@@ -42,10 +44,5 @@ class GridAdaptron(cmTrainer: CognitiveMapTrainer, cognitiveMapQuality: MeanSqua
     } else {
       cognitiveMap
     }
-  }
-
-  private def removeRandomLink(cognitiveMap: CognitiveMap): CognitiveMap = {
-    val random = new Random
-    cognitiveMap.removeLink(cognitiveMap.getLinks(random.nextInt(cognitiveMap.getLinks.length)))
   }
 }
