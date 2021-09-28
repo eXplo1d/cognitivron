@@ -1,5 +1,6 @@
 package org.mephi.adaptron
 
+import akka.actor.ActorRef
 import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
 import org.mephi.metric.CognitiveMapError
@@ -10,7 +11,7 @@ class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer,
                         cognitiveMapError: CognitiveMapError) extends Adaptron {
   override def adapt(cognitiveMap: CognitiveMap): CognitiveMap = {
     var linksLength = cognitiveMap.getConcept2Link.length
-    val threshold = (linksLength/3).toInt // max links number can be deleted
+    val threshold = (linksLength / 3) // max links number can be deleted
     var bestCm = cognitiveMap
     breakable {
       for (_ <- Range(0, threshold)) {
@@ -28,29 +29,26 @@ class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer,
   private def removeWorstLink(cognitiveMap: CognitiveMap): CognitiveMap = {
     val links = cognitiveMap.getConcept2Link
     var worstMeanSquaredError = cognitiveMapError.calc(cognitiveMap)
-    var worstConcept = links.head._1
-    var worstLink = links.head._2
-    var worstFound = false
+    var worstLink: Option[(String, ActorRef)] = None
     links.foreach {
-      case (concept, link) => {
+      case (concept, link) =>
         cognitiveMap.removeLink(concept, link)
         cmTrainer.train(cognitiveMap)
         val currMeanSquaredError = cognitiveMapError.calc(cognitiveMap)
         if (currMeanSquaredError < worstMeanSquaredError) {
           worstMeanSquaredError = currMeanSquaredError
-          worstConcept = concept
-          worstLink =  link
-          worstFound = true
+          worstLink = Some(concept -> link)
         } else {
           cognitiveMap.addLink(concept, link)
         }
-      }
     }
-
-    if (worstFound) {
-      cognitiveMap.removeLink(worstConcept, worstLink)
-      cognitiveMap
-    } else {
+    worstLink.map {
+      case (concept, link) =>
+        cognitiveMap.removeLink(concept, link)
+        cmTrainer.train(cognitiveMap)
+        cognitiveMap
+    }.getOrElse {
+      cmTrainer.train(cognitiveMap)
       cognitiveMap
     }
   }
