@@ -12,7 +12,7 @@ class MeanAbsoluteError(cognitiveMap: CognitiveMap, dataSeq: Seq[(String, Double
     }.mean()
   }
 
-  private def train(cognitiveMapTrainer: CognitiveMapTrainer, cognitiveMap: CognitiveMap, dataSeq: Seq[(String, Double)]): Seq[String, Double] {
+  private def train(cognitiveMapTrainer: CognitiveMapTrainer, cognitiveMap: CognitiveMap, dataSeq: Seq[(String, Double)]): Seq[String, Double] = {
     cognitiveMapTrainer.train(cognitiveMap)
   }
 }

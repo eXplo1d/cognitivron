@@ -2,7 +2,11 @@ package org.mephi.concept
 
 import akka.actor.{ActorRef, Props}
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.mephi.calculation.CalculationState
+=======
+import org.mephi.calculation.{CalculationState, Request}
+>>>>>>> origin/master
 =======
 import org.mephi.calculation.{CalculationState, Request}
 >>>>>>> origin/master
@@ -26,6 +30,10 @@ class CalculationConcept(private val conceptName: String,
     case link: LinkEvent => addLink(link)
     case unlink: UnlinkEvent => unlinkEvent(unlink)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    case updateValueEvent: UpdateValueEvent => updateValue(updateValueEvent)
+>>>>>>> origin/master
 =======
     case updateValueEvent: UpdateValueEvent => updateValue(updateValueEvent)
 >>>>>>> origin/master

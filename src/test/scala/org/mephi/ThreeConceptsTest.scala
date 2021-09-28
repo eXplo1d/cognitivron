@@ -2,8 +2,13 @@ package org.mephi
 
 import akka.actor.ActorSystem
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.mephi.calculation.CommonCalculationState
 import org.mephi.concept.{CalculationConcept, MultiplyLink, Listener}
+=======
+import org.mephi.calculation.{CommonCalculationState, Request}
+import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}
+>>>>>>> origin/master
 =======
 import org.mephi.calculation.{CommonCalculationState, Request}
 import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}

@@ -2,7 +2,11 @@ package org.mephi
 
 import akka.actor.ActorSystem
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.mephi.calculation.CommonCalculationState
+=======
+import org.mephi.calculation.{CommonCalculationState, Request}
+>>>>>>> origin/master
 =======
 import org.mephi.calculation.{CommonCalculationState, Request}
 >>>>>>> origin/master

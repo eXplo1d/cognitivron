@@ -1,9 +1,13 @@
 *.bsp/
 *.idea/
 <<<<<<< HEAD
+<<<<<<< HEAD
 *target/*
 project/target
 project/project/target
+=======
+**/target/*
+>>>>>>> origin/master
 =======
 **/target/*
 >>>>>>> origin/master
