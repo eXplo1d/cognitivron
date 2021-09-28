@@ -1,8 +1,13 @@
 package org.mephi
 
 import akka.actor.ActorSystem
+<<<<<<< HEAD
 import org.mephi.calculation.CommonCalculationState
 import org.mephi.concept.{CalculationConcept, MultiplyLink, Listener}
+=======
+import org.mephi.calculation.{CommonCalculationState, Request}
+import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}
+>>>>>>> origin/master
 import org.mephi.events.{CalculationEvent, LinkEvent}
 
 object ThreeConceptsTest extends App {
@@ -26,6 +31,6 @@ object ThreeConceptsTest extends App {
   }))
   actorY ! LinkEvent(actorSystem.actorOf(MultiplyLink(listener, 1.0)))
   actorX ! new CalculationEvent {
-    override def getRequest: String = "testetst"
+    override def getRequest = Request(0)
   }
 }

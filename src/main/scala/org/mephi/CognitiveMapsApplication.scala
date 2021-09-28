@@ -1,7 +1,11 @@
 package org.mephi
 
 import akka.actor.ActorSystem
+<<<<<<< HEAD
 import org.mephi.calculation.CommonCalculationState
+=======
+import org.mephi.calculation.{CommonCalculationState, Request}
+>>>>>>> origin/master
 import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}
 import org.mephi.events.{CalculationEvent, LinkEvent}
 
@@ -14,6 +18,6 @@ object CognitiveMapsApplication extends App {
   val listener = actorSystem.actorOf(Listener())
   actorY ! LinkEvent(actorSystem.actorOf(MultiplyLink(listener, 1.0)))
   actorX ! new CalculationEvent {
-    override def getRequest: String = "testetst"
+    override def getRequest: Request = Request(0)
   }
 }

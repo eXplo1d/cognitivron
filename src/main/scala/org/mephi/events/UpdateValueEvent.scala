@@ -2,6 +2,7 @@ package org.mephi.events
 
 import org.mephi.calculation.Request
 
-trait CalculationEvent {
+trait UpdateValueEvent {
   def getRequest: Request
+  def getValue: Double
 }
