@@ -19,7 +19,4 @@ object CognitiveMapsApplication extends App {
   actorX ! new CalculationEvent {
     override def getRequest: Request = Request(0)
   }
-
-  new CmErrorMetric(MeanAbsoluteError, )
-  new GridAdaptron()
 }
