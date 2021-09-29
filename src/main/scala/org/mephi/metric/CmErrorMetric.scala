@@ -6,7 +6,11 @@ class CmErrorMetric(errorMetric: ErrorMetric, expected: Map[String, Seq[Double]]
 
   override def calc(cognitiveMap: CognitiveMap): Double = {
     val predicted = cognitiveMap.makeIterations(iterations)
-    val res = errorMetric.calc(predicted.values.head, expected.values.head)
-    res
+    expected.map {
+      case (concept, expectedValues) => {
+        val predictedValues = predicted.getOrElse(concept, expectedValues)
+        errorMetric.calc(expectedValues, predictedValues)
+      }
+    }.max
   }
 }
