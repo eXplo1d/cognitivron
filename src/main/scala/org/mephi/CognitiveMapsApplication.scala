@@ -1,12 +1,9 @@
 package org.mephi
 
 import akka.actor.ActorSystem
-import org.mephi.adaptron.Adaptron
 import org.mephi.calculation.{CommonCalculationState, Request}
-import org.mephi.cm.CognitiveMap
 import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}
 import org.mephi.events.{CalculationEvent, LinkEvent}
-import org.mephi.metric.{CmErrorMetric, MeanAbsoluteError}
 
 object CognitiveMapsApplication extends App {
 
