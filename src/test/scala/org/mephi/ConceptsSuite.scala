@@ -14,7 +14,7 @@ class ConceptsSuite extends AnyFunSuite {
     val actorY = actorSystem.actorOf(CalculationConcept("y", new CommonCalculationState(Map("x" -> 8))))
     actorX ! LinkEvent(actorSystem.actorOf(MultiplyLink(actorY, 0.5)))
     val listener = actorSystem.actorOf(Listener(calc => {
-      calc.getResult === 0.692302339452737
+      assume(calc.getResult === 0.692302339452737)
       actorSystem.terminate()
     }))
     actorY ! LinkEvent(actorSystem.actorOf(MultiplyLink(listener, 1.0)))
@@ -38,12 +38,12 @@ class ConceptsSuite extends AnyFunSuite {
     actorZ ! LinkEvent(actorSystem.actorOf(MultiplyLink(actorY, 0.5)))
 
     val listener = actorSystem.actorOf(Listener(calc => {
-      calc.getResult === 0.5757043393389744
+      assume(calc.getResult === 0.5757043393389744)
       actorSystem.terminate()
     }))
     actorY ! LinkEvent(actorSystem.actorOf(MultiplyLink(listener, 1.0)))
     actorX ! new CalculationEvent {
-      override def getRequest = Request(0)
+      override def getRequest: Request = Request(0)
     }
   }
 }
