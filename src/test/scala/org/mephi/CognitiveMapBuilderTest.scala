@@ -3,6 +3,7 @@ package org.mephi
 import akka.actor.ActorSystem
 import org.mephi.cm.CognitiveMapBuilder
 
+// TODO MOOVE TO SCALATEST
 object CognitiveMapBuilderTest extends  App {
 
   val actorSystem = ActorSystem("cm")

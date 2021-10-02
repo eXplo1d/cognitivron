@@ -3,12 +3,12 @@ package org.mephi.adaptron
 import akka.actor.ActorRef
 import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
-import org.mephi.metric.CognitiveMapError
+import org.mephi.metric.CognitiveMapErrorCalculator
 
 import scala.util.control.Breaks._
 
 class NotRandomAdaptron(cmTrainer: CognitiveMapTrainer,
-                        cognitiveMapError: CognitiveMapError) extends Adaptron {
+                        cognitiveMapError: CognitiveMapErrorCalculator) extends Adaptron {
   override def adapt(cognitiveMap: CognitiveMap): CognitiveMap = {
     var linksLength = cognitiveMap.getConcept2Link.length
     val threshold = (linksLength / 3) // max links number can be deleted

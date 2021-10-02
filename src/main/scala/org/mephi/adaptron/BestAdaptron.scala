@@ -2,12 +2,11 @@ package org.mephi.adaptron
 
 import org.mephi.cm.CognitiveMap
 import org.mephi.fit.CognitiveMapTrainer
-import org.mephi.metric.CognitiveMapError
-
+import org.mephi.metric.CognitiveMapErrorCalculator
 import scala.collection.immutable.Range
 
 class BestAdaptron(cmTrainer: CognitiveMapTrainer,
-                   cognitiveMapError: CognitiveMapError,
+                   cognitiveMapError: CognitiveMapErrorCalculator,
                    randomAdaptronTries: Int = 10) extends Adaptron {
   override def adapt(initCm: CognitiveMap): CognitiveMap = {
     val randomAdaptron = new RandomAdaptron(cmTrainer, cognitiveMapError)
