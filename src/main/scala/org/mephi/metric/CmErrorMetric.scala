@@ -2,7 +2,7 @@ package org.mephi.metric
 
 import org.mephi.cm.CognitiveMap
 
-class CmErrorMetric(errorMetric: ErrorMetric, expected: Map[String, Seq[Double]], iterations: Int = 10) extends CmError {
+class CmErrorMetric(errorMetric: ErrorMetric, expected: Map[String, Seq[Double]], iterations: Int = 10) extends CognitiveMapErrorCalculator {
 
   override def calc(cognitiveMap: CognitiveMap): Double = {
     val predicted = cognitiveMap.makeIterations(iterations)
