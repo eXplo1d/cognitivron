@@ -1,11 +1,7 @@
 package org.mephi
 
-import akka.actor.ActorSystem
-import org.mephi.calculation.{CommonCalculationState, Request}
-import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}
-import org.mephi.events.{CalculationEvent, LinkEvent}
 import org.scalatest.funsuite.AnyFunSuite
-import org.mephi.metric.{MeanAbsoluteError,MeanSquaredError,RootMeanSquaredError,R2CoefficientError}
+import org.mephi.metric.{MeanAbsoluteError, MeanSquaredError, RootMeanSquaredError, R2CoefficientError, MeanAbsolutePercentageError}
 import scala.math.sqrt
 
 class MetricsSuite extends AnyFunSuite {
@@ -28,5 +24,9 @@ class MetricsSuite extends AnyFunSuite {
   test("Test R2CoefficientError") {
     val error = R2CoefficientError.calc(predictedTestData, expectedTestData)
     assume(error === 1.6)
+  }
+  test("Test MeanAbsolutePercentageError") {
+    val error = MeanAbsolutePercentageError.calc(predictedTestData, expectedTestData)
+    assume(error.toInt === 175 / 6)
   }
 }
