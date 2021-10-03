@@ -1,11 +1,8 @@
 package org.mephi
 
-import akka.actor.ActorSystem
-import org.mephi.calculation.{CommonCalculationState, Request}
-import org.mephi.concept.{CalculationConcept, Listener, MultiplyLink}
-import org.mephi.events.{CalculationEvent, LinkEvent}
+import org.mephi.metric.{MeanAbsoluteError, MeanSquaredError, R2CoefficientError, RootMeanSquaredError}
 import org.scalatest.funsuite.AnyFunSuite
-import org.mephi.metric.{MeanAbsoluteError,MeanSquaredError,RootMeanSquaredError,R2CoefficientError}
+
 import scala.math.sqrt
 
 class MetricsSuite extends AnyFunSuite {
