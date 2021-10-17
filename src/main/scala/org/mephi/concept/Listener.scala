@@ -6,7 +6,7 @@ import org.mephi.events.CalculationResultEvent
 class Listener extends Actor with Concept {
 
   override def receive: Receive = {
-    case calculated: CalculationResultEvent => println(s"Calculated result: ${calculated.getConceptName} = ${calculated.getResult}")
+    case calculated: CalculationResultEvent => println(s"[iteration: ${calculated.getRequest.iteration}] Calculated result: ${calculated.getConceptName} = ${calculated.getResult}")
   }
 }
 

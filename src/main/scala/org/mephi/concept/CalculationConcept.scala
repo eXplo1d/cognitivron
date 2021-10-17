@@ -9,43 +9,56 @@ import scala.collection.immutable.HashMap
 class CalculationConcept(private val conceptName: String,
                          private val calculationState: CalculationState) extends Concept {
 
-  private var links = Seq[ActorRef]()
-
-  private var parametersMap = new HashMap[Int, Map[String, CalculationResultEvent]]()
-  private val attributes = calculationState.getAttributes
+  private var outgoingLinks = Seq[ActorRef]()
+  private var incomingLinks = Set[String]()
+  private var parametersMap = new HashMap[Int, Map[String, Double]]()
   private var results = new HashMap[Int, Double]()
 
   override def receive: Receive = {
-    case calculation: CalculationEvent => calculate(calculation)
-    case delta: BackpropagationEvent => applyDelta(delta)
-    case calculated: CalculationResultEvent => collectResult(calculated)
+    case setUpValue: SetUpValueEvent => updateValue(setUpValue)
     case link: LinkEvent => addLink(link)
     case unlink: UnlinkEvent => unlinkEvent(unlink)
-    case updateValueEvent: UpdateValueEvent => updateValue(updateValueEvent)
+    case calculation: CalculationEvent => calculate(calculation)
+    case delta: BackpropagationEvent => applyDelta(delta)
+    case input: CalculationResultEvent => collectResult(input)
   }
 
   private def collectResult(calculated: CalculationResultEvent): Unit = {
-    if (attributes.contains(calculated.getConceptName)) {
-      val calcState = parametersMap.getOrElse(calculated.getRequest.iteration, Map())
-      val newMap = calcState + (calculated.getConceptName -> calculated)
-      parametersMap = parametersMap + (calculated.getRequest.iteration -> newMap)
-    } else {
-      parametersMap = parametersMap + (calculated.getRequest.iteration -> Map(calculated.getConceptName -> calculated))
-    }
+    val calcState = parametersMap.getOrElse(calculated.getRequest.iteration, Map())
+    val newMap = calcState + (calculated.getConceptName -> calculated.getResult)
+    parametersMap = parametersMap + (calculated.getRequest.iteration -> newMap)
     checkAndNotify(calculated.getRequest)
   }
 
   private def addLink(linkEvent: LinkEvent): Unit = {
-    links = links ++ Seq(linkEvent.getLink)
-    linkEvent.getLink ! linkEvent
+    linkEvent.linkType match {
+      case LinkTypes.IncomingLink => incomingLinks = incomingLinks ++ Seq(linkEvent.concept)
+      case LinkTypes.OutgoingLink =>
+        outgoingLinks = outgoingLinks ++ Seq(linkEvent.link)
+        linkEvent.link ! linkEvent
+    }
   }
 
   private def unlinkEvent(unlinkEvent: UnlinkEvent): Unit = {
-    unlinkEvent.getLink ! unlinkEvent
+    unlinkEvent.linkType match {
+      case LinkTypes.IncomingLink => incomingLinks = incomingLinks -- Seq(unlinkEvent.concept)
+      case LinkTypes.OutgoingLink =>
+        unlinkEvent.link ! unlinkEvent
+    }
   }
 
   private def calculate(calculationEvent: CalculationEvent): Unit = {
-    checkAndNotify(calculationEvent.getRequest)
+    val iter = calculationEvent.getRequest.iteration
+    if (results.contains(iter)) {
+      val res = CalculationResultEvent(
+        calculationEvent.getRequest,
+        this.conceptName,
+        results.getOrElse(calculationEvent.getRequest.iteration - 1, 0.0)
+      )
+      outgoingLinks.foreach { link => link ! res }
+    } else {
+      checkAndNotify(calculationEvent.getRequest)
+    }
   }
 
   private def applyDelta(delta: BackpropagationEvent): Unit = {
@@ -53,22 +66,23 @@ class CalculationConcept(private val conceptName: String,
   }
 
   private def checkAndNotify(request: Request): Unit = {
-    val params = parametersMap.getOrElse(request.iteration, Map())
-    if (params.keySet == attributes) {
+    val params = parametersMap.getOrElse(request.iteration - 1, Map())
+    if (params.keySet == incomingLinks) {
       val previous = results.getOrElse(request.iteration - 1, 0.0)
       val result = calculationState.calculate(params, previous)
-      val calculation = CalculationResultEvent(request, conceptName, result)
-      results += (request.iteration -> result)
-      links.foreach {
+      val newRequest = request.copy(request.iteration)
+      val calculation = CalculationResultEvent(newRequest, conceptName, result)
+      results += (newRequest.iteration -> result)
+      outgoingLinks.foreach {
         link => link ! calculation
       }
     }
   }
 
-  private def updateValue(updateValueEvent: UpdateValueEvent): Unit = {
-    results += (updateValueEvent.getRequest.iteration -> updateValueEvent.getValue)
-    val calculation = CalculationResultEvent(updateValueEvent.getRequest, conceptName, updateValueEvent.getValue)
-    links.foreach {
+  private def updateValue(updateValueEvent: SetUpValueEvent): Unit = {
+    results += (updateValueEvent.request.iteration -> updateValueEvent.value)
+    val calculation = CalculationResultEvent(updateValueEvent.request, conceptName, updateValueEvent.value)
+    outgoingLinks.foreach {
       link => link ! calculation
     }
   }

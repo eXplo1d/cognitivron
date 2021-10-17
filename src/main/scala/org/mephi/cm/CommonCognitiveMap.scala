@@ -1,6 +1,6 @@
 package org.mephi.cm
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import org.mephi.calculation.Request
 import org.mephi.concept.Listener
 import org.mephi.events._
@@ -14,7 +14,7 @@ class CommonCognitiveMap(private val concepts: Map[String, ActorRef],
   build()
   private var currentIteration: Int = 0
   private val observer = new CmResultObserver(concepts.keySet)
-  applyObserver(observer, concepts.values.toList)
+  applyObserver(observer, concepts)
 
   override def copy(): CognitiveMap = {
     this
@@ -25,7 +25,7 @@ class CommonCognitiveMap(private val concepts: Map[String, ActorRef],
       links =>
         if (links.contains(link)) {
           concepts.get(concept).foreach {
-            conceptActor => conceptActor ! UnlinkEvent(link)
+            conceptActor => conceptActor ! UnlinkEvent(concept, link, LinkTypes.OutgoingLink)
           }
         }
     }
@@ -42,23 +42,22 @@ class CommonCognitiveMap(private val concepts: Map[String, ActorRef],
 
   override def addLink(concept: String, link: ActorRef): Unit = {
     concepts.get(concept).foreach {
-      conceptRef => conceptRef ! LinkEvent(link)
+      conceptRef => conceptRef ! LinkEvent(concept, link, LinkTypes.OutgoingLink)
     }
   }
 
   override def updateValue(concept: String, value: Double): Unit = {
     concepts.get(concept).foreach {
       conceptActor =>
-        conceptActor ! new UpdateValueEvent {
-          override def getRequest: Request = Request(currentIteration)
-
-          override def getValue: Double = value
-        }
+        conceptActor ! SetUpValueEvent(Request(currentIteration), value)
     }
   }
 
   override def makeIterations(n: Int): Map[String, List[Double]] = {
-    val iterRange = Range(currentIteration, currentIteration + n)
+    if (currentIteration == 0) {
+      throw new IllegalStateException("Map is not configured. Set initial values")
+    }
+    val iterRange = (currentIteration + 1) to (currentIteration + n)
     for (i <- iterRange) {
       currentIteration = i
       val req = Request(currentIteration)
@@ -87,19 +86,29 @@ class CommonCognitiveMap(private val concepts: Map[String, ActorRef],
         concepts.get(kv._1).foreach {
           concept =>
             kv._2.foreach {
-              link => concept ! LinkEvent(link)
+              link => concept ! LinkEvent(kv._1, link, LinkTypes.OutgoingLink)
             }
         }
     }
   }
 
-  private def applyObserver(observer: CmResultObserver, concepts: Seq[ActorRef]): Unit = {
+  private def applyObserver(observer: CmResultObserver, concepts: Map[String, ActorRef]): Unit = {
     val listener = actorSystem.actorOf(Listener(calc => observer.collect(calc)))
+    val listener2 = actorSystem.actorOf(Props(new Listener()))
     concepts.foreach {
-      concept =>
-        concept ! new LinkEvent {
-          override def getLink: ActorRef = listener
-        }
+      case (_: String, actor: ActorRef) =>
+        actor ! LinkEvent("listener1", listener, LinkTypes.OutgoingLink)
+        actor ! LinkEvent("listener2", listener2, LinkTypes.OutgoingLink)
+    }
+  }
+
+  override def setValues(concept2Values: Map[String, Double]): Unit = {
+    currentIteration += 1
+    val req = Request(currentIteration)
+    concept2Values.foreach {
+      case (concept, value) => concepts
+        .get(concept)
+        .foreach(conceptActor => conceptActor ! SetUpValueEvent(req, value))
     }
   }
 }

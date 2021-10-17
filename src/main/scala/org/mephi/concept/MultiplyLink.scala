@@ -1,7 +1,7 @@
 package org.mephi.concept
 
 import akka.actor.{ActorRef, Props}
-import org.mephi.events.{CalculationResultEvent, LinkEvent, UnlinkEvent}
+import org.mephi.events.{CalculationResultEvent, LinkEvent, LinkTypes, UnlinkEvent}
 
 class MultiplyLink(val to: ActorRef,
                    var multiplier: Double) extends Link {
@@ -15,9 +15,17 @@ class MultiplyLink(val to: ActorRef,
         calculationResultEvent.getConceptName,
         calculationResultEvent.getResult * getMultiplier
       )
-    case _: LinkEvent => enabled = true
-    case _: UnlinkEvent => enabled = false
-    case _ => to ! _
+    case link: LinkEvent =>
+      if (link.linkType == LinkTypes.OutgoingLink) {
+        enabled = true
+        to ! link.copy(linkType = LinkTypes.IncomingLink)
+      }
+    case unlink: UnlinkEvent =>
+      if (unlink.linkType == LinkTypes.OutgoingLink) {
+        enabled = false
+        to ! unlink.copy(linkType = LinkTypes.IncomingLink)
+      }
+    case other => to ! other
   }
 
   override def getTo: ActorRef = to

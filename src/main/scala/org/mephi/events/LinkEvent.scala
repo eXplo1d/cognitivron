@@ -2,14 +2,12 @@ package org.mephi.events
 
 import akka.actor.ActorRef
 
-trait LinkEvent {
-  def getLink: ActorRef
-}
+case class LinkEvent(concept: String, link: ActorRef, linkType: LinkType)
 
-object LinkEvent {
-  def apply(actorRef: ActorRef): LinkEvent = {
-    new LinkEvent {
-      override def getLink: ActorRef = actorRef
-    }
-  }
+sealed trait LinkType
+
+object LinkTypes {
+  object OutgoingLink extends LinkType
+
+  object IncomingLink extends LinkType
 }
