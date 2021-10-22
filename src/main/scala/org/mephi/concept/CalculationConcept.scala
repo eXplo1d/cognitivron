@@ -5,6 +5,7 @@ import org.mephi.calculation.{CalculationState, Request}
 import org.mephi.events._
 
 import scala.collection.immutable.HashMap
+import scala.collection.mutable.ListBuffer
 
 class CalculationConcept(private val conceptName: String,
                          private val calculationState: CalculationState) extends Concept {
@@ -13,6 +14,7 @@ class CalculationConcept(private val conceptName: String,
   private var incomingLinks = Set[String]()
   private var parametersMap = new HashMap[Int, Map[String, Double]]()
   private var results = new HashMap[Int, Double]()
+  private var todoCalculations = new HashMap[Int, CalculationEvent]()
 
   override def receive: Receive = {
     case setUpValue: SetUpValueEvent => updateValue(setUpValue)
@@ -27,7 +29,13 @@ class CalculationConcept(private val conceptName: String,
     val calcState = parametersMap.getOrElse(calculated.getRequest.iteration, Map())
     val newMap = calcState + (calculated.getConceptName -> calculated.getResult)
     parametersMap = parametersMap + (calculated.getRequest.iteration -> newMap)
-    checkAndNotify(calculated.getRequest)
+    val iterBuffer = new ListBuffer[Int]()
+    for (calc <- todoCalculations) {
+      if (checkAndNotify(calc._2.getRequest)) {
+        iterBuffer.addOne(calc._1)
+      }
+    }
+    todoCalculations = todoCalculations.removedAll(iterBuffer)
   }
 
   private def addLink(linkEvent: LinkEvent): Unit = {
@@ -53,11 +61,13 @@ class CalculationConcept(private val conceptName: String,
       val res = CalculationResultEvent(
         calculationEvent.getRequest,
         this.conceptName,
-        results.getOrElse(calculationEvent.getRequest.iteration - 1, 0.0)
+        results.getOrElse(calculationEvent.getRequest.iteration, 0.0)
       )
       outgoingLinks.foreach { link => link ! res }
     } else {
-      checkAndNotify(calculationEvent.getRequest)
+      if (!checkAndNotify(calculationEvent.getRequest)) {
+        todoCalculations += (calculationEvent.getRequest.iteration -> calculationEvent)
+      }
     }
   }
 
@@ -65,7 +75,7 @@ class CalculationConcept(private val conceptName: String,
     calculationState.applyDelta(delta.getError)
   }
 
-  private def checkAndNotify(request: Request): Unit = {
+  private def checkAndNotify(request: Request): Boolean = {
     val params = parametersMap.getOrElse(request.iteration - 1, Map())
     if (params.keySet == incomingLinks) {
       val previous = results.getOrElse(request.iteration - 1, 0.0)
@@ -76,6 +86,9 @@ class CalculationConcept(private val conceptName: String,
       outgoingLinks.foreach {
         link => link ! calculation
       }
+      true
+    } else {
+      false
     }
   }
 

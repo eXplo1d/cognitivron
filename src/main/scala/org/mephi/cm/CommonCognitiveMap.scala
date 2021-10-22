@@ -1,6 +1,6 @@
 package org.mephi.cm
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import org.mephi.calculation.Request
 import org.mephi.concept.Listener
 import org.mephi.events._
@@ -61,12 +61,10 @@ class CommonCognitiveMap(private val concepts: Map[String, ActorRef],
     for (i <- iterRange) {
       currentIteration = i
       val req = Request(currentIteration)
-      concepts.values.foreach {
-        concept =>
-          concept ! new CalculationEvent {
-            override def getRequest: Request = req
-          }
+      val event = new CalculationEvent {
+        override def getRequest: Request = req
       }
+      concepts.values.foreach { concept => concept ! event }
     }
     observer
       .getIfReady(iterRange)
@@ -94,11 +92,9 @@ class CommonCognitiveMap(private val concepts: Map[String, ActorRef],
 
   private def applyObserver(observer: CmResultObserver, concepts: Map[String, ActorRef]): Unit = {
     val listener = actorSystem.actorOf(Listener(calc => observer.collect(calc)))
-    val listener2 = actorSystem.actorOf(Props(new Listener()))
     concepts.foreach {
       case (_: String, actor: ActorRef) =>
         actor ! LinkEvent("listener1", listener, LinkTypes.OutgoingLink)
-        actor ! LinkEvent("listener2", listener2, LinkTypes.OutgoingLink)
     }
   }
 
@@ -139,7 +135,9 @@ private[cm] class CmResultObserver(concepts: Set[String]) {
         (concept2data._1, concept2data
           ._2
           .filter(calc => range.contains(calc._1)).values
-          .toList)
+          .toList
+          .sortBy(l  => l.getRequest.iteration)
+        )
     }.toMap
   }
 
